@@ -6,7 +6,7 @@ import time
 import logging
 
 # Define your bot token here
-BOT_TOKEN = '7814126602:AAEsV1XwNHsCLOzBnorsbuxckCpWhU6TTzA'
+BOT_TOKEN = 'Your Bot Token'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Store the original order message info
@@ -146,6 +146,7 @@ def get_main_menu_keyboard():
     keyboard.row("📂 PROOFS", "📞 Support")
     return keyboard
 
+# Inside the `start` function, update this section to store referrer info
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.from_user.id
@@ -153,12 +154,10 @@ def start(message):
 
     if user_id not in total_users:
         total_users.add(user_id)
-        user_data[user_id] = {'balance': 0, 'invited_users': 0, 'bonus_claimed': False}
+        user_data[user_id] = {'balance': 0, 'invited_users': 0, 'bonus_claimed': False, 'referrer_id': referrer_id}
 
         if referrer_id and referrer_id != user_id and referrer_id in user_data:
-            user_data[referrer_id]['invited_users'] += 1
-            user_data[referrer_id]['balance'] += 1
-            bot.send_message(referrer_id, "Successful referral! You earned 1 point.")
+            user_data[referrer_id]['referrals'] = user_data[referrer_id].get('referrals', []) + [user_id]
 
     message_text = "🟢 Welcome In Our Premium Account Giveaway Bot\n"
     message_text += "---------------------------------------\n"
@@ -177,9 +176,11 @@ def start(message):
         parse_mode="Markdown"
     )
 
+# Inside the `joined_button` callback, add this section to notify referrer
 @bot.callback_query_handler(func=lambda call: call.data == "joined")
 def joined_button(call):
     user_id = call.from_user.id
+    referrer_id = user_data.get(user_id, {}).get("referrer_id")
     all_joined = True
 
     for channel in CHANNELS:
@@ -194,8 +195,16 @@ def joined_button(call):
 
     if all_joined:
         bot.send_message(user_id, "Thank you for joining! You may now use the bot's premium features.", reply_markup=get_main_menu_keyboard())
+
+        # Award points and notify referrer, if any
+        if referrer_id:
+            user_data[referrer_id]['balance'] += 1
+            user_data[referrer_id]['invited_users'] += 1
+            referrer_name = call.from_user.full_name  # Get the name of the new user
+            bot.send_message(referrer_id, f"❤️ Your referral {referrer_name} joined our channel.\n➕ 1 point added.")
     else:
         bot.answer_callback_query(call.id, "❌ You are not joined! You must join all Channels!")
+
 
 @bot.message_handler(func=lambda message: message.text == "💲 Withdraw")
 def withdraw(message):
