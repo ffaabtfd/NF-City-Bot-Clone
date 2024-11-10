@@ -6,7 +6,7 @@ import time
 import logging
 
 # Define your bot token here
-BOT_TOKEN = 'Your Bot Token'
+BOT_TOKEN = '7814126602:AAGzhZjU04L9n9TJQWynL-ndg8aYirmxOXw'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Store the original order message info
@@ -34,60 +34,38 @@ CHORKI_ON_MAIL_CHANNEL_ID = -1002113563800
 HOICHOI_ON_MAIL_CHANNEL_ID = -1002113563800
 GROUP_ID = -1002263161625
 REVIEW_CHANNEL_ID = -1002113563800
+ADMIN_USER_IDS = {7303810912,5991909954}  # Replace with actual admin user IDs
 
 # Options for withdrawal items and points cost
 options = {
-    "💰 Chorki Crack": {"cost": 1, "channel_id": CHORKI_CRACK_CHANNEL_ID},
-    "👥 Hoichoi Crack": {"cost": 5, "channel_id": HOICHOI_CRACK_CHANNEL_ID},
-    "💲 Chorki On Mail": {"cost": 1, "channel_id": CHORKI_ON_MAIL_CHANNEL_ID, "group_id": GROUP_ID},
-    "📂 Hoichoi On mail": {"cost": 30, "channel_id": HOICHOI_ON_MAIL_CHANNEL_ID, "group_id": GROUP_ID},
+    "💰 Chorki Crack": {"cost": 0, "channel_id": CHORKI_CRACK_CHANNEL_ID},
+    "👥 Hoichoi Crack": {"cost": 3, "channel_id": HOICHOI_CRACK_CHANNEL_ID},
+    "💲 Hoichoi 30 Days": {"cost": 15, "channel_id": CHORKI_ON_MAIL_CHANNEL_ID, "group_id": GROUP_ID},
+    "📂 Hoichoi Own mail": {"cost": 30, "channel_id": HOICHOI_ON_MAIL_CHANNEL_ID, "group_id": GROUP_ID},
 }
 
 # Account storage
 accounts = {
     "💰 Chorki Crack": [
-        {"username": "AbdullahAlMamun", "password": "500440Ma"},
-        {"username": "20/2013/0076/01", "password": "Kulchandi@123"},
-        {"username": "1341025", "password": "01537298084"},
-        {"username": "01531311283", "password": "sanjid1423//"},
-        {"username": "Abeg Rahman", "password": "Abeg1621"},
-        {"username": "7hnazmul@gmail.com", "password": "mnop890abc"},
-        {"username": "A.M.Jubayer", "password": "wp06ctys"},
-        {"username": "01973462394", "password": "MIF2004"},
-        {"username": "7076723486", "password": "973463n"},
-        {"username": "3684069200", "password": "77387"},
-        {"username": "424khantanvir", "password": "chorki1997"},
-        {"username": "8996nightmare@gmail.com", "password": "nightmare8996"},
-        {"username": "9800460", "password": "Mobc1!36"},
-        {"username": "Abir", "password": "abir&ruhu"},
-        {"username": "01674894440shiblee@gmail.com", "password": "vEJbA9fwOXLK"},
-        {"username": "424khantanvir@gmail.com", "password": "chorki1997"},
-        {"username": "97168", "password": "807499"},
-        {"username": "01751948921", "password": "2591"},
-        {"username": "Abdur1986A", "password": "Abdur1986@"},
-        {"username": "4575", "password": "01753211086"},
-        {"username": "121522000", "password": "121522000"},
-        {"username": "01622180764", "password": "Doodly007@"},
-        {"username": "ABID RAHMAN", "password": "*1216Mcsk"},
-        {"username": "01674894440shiblee@gmail.com", "password": "ash02010"},
-        {"username": "400212217", "password": "hbsdfhbfhsdbfnksdbcfirbwuei4r487y38r43"},
-        {"username": "01314011976", "password": "kothakotha990@gmail.com"},
-        {"username": "01730801125", "password": "nayon359"}
+
     ],
     "👥 Hoichoi Crack": [
         {"username": "datta.siddhartha@rediffmail.com", "password": "chem@1980"},
-        {"username": "datta.siddhartha@rediffmail.com", "password": "chem@1980"},
-        {"username": "mitra_arijit04@yahoo.com", "password": "holymother_1971"},
         {"username": "soumik.bsp@gmail.com", "password": "bhu18042015"},
         {"username": "sunscriptysubscripty@gmail.com", "password": "Yoursubhub"},
         {"username": "bjeerupam@gmail.com", "password": "Shub00@76"}
-    ]
+    ],
+    "💲 Hoichoi 30 Days": [
+        {"username": "datta.siddhartha@rediffmail.com", "password": "chem@1980"},
+        {"username": "soumik.bsp@gmail.com", "password": "bhu18042015"},
+        {"username": "sunscriptysubscripty@gmail.com", "password": "Yoursubhub"},
+        {"username": "bjeerupam@gmail.com", "password": "Shub00@76"}
+        ]
 }
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Updated function for Chorki Crack and Hoichoi Crack with account assignment
 @bot.callback_query_handler(func=lambda call: call.data.startswith("confirm_") or call.data == "cancel")
 def handle_confirm_or_cancel(call):
     user_id = call.from_user.id
@@ -97,10 +75,14 @@ def handle_confirm_or_cancel(call):
     if action == "confirm":
         cost = options[option]["cost"]
 
+        # Check if user has sufficient balance
         if user_data.get(user_id, {}).get("balance", 0) >= cost:
+            # Deduct the balance for the withdrawal
             user_data[user_id]["balance"] -= cost
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                   text=f"Your withdrawal for {option} has been confirmed. {cost} points have been deducted.")
+            
+            # Generate and send order confirmation
             order_id = generate_order_id()
             message_text = (
                 f"✅ *New Order Received*\n\n"
@@ -116,28 +98,37 @@ def handle_confirm_or_cancel(call):
 
             keyboard = types.InlineKeyboardMarkup()
             keyboard.add(types.InlineKeyboardButton("Track Order Details", url="https://t.me/OTTFREEBOT"))
-            # Send message to designated channel
-            order_msg = bot.send_message(options[option]["channel_id"], message_text, parse_mode="MarkdownV2")
-            order_messages[order_msg.message_id] = user_id  # Store message ID with user ID
-            
-            if "group_id" in options[option]:
-                group_msg = bot.send_message(options[option]["group_id"], message_text, reply_markup=keyboard, parse_mode="MarkdownV2")
-                order_messages[group_msg.message_id] = user_id  # Store message ID with user ID
-            # Provide an account to the user (only for Chorki and Hoichoi Crack)
-            if option == "💰 Chorki Crack":
-                account = random.choice(accounts["💰 Chorki Crack"])
-                account_message = f"🔹 **Chorki Account**:\nUsername: {account['username']}\nPassword: {account['password']}"
-                bot.send_message(user_id, account_message)
-            elif option == "👥 Hoichoi Crack":
-                account = random.choice(accounts["👥 Hoichoi Crack"])
-                account_message = f"🔹 **Hoichoi Account**:\nUsername: {account['username']}\nPassword: {account['password']}"
-                bot.send_message(user_id, account_message)
 
+            # Send order message only to the channel if it's "Hoichoi 30 Days"
+            if option == "💲 Hoichoi 30 Days":
+                bot.send_message(options[option]["channel_id"], message_text, reply_markup=keyboard, parse_mode="MarkdownV2")
+            else:
+                # For other options, send to both the channel and group
+                order_msg = bot.send_message(options[option]["channel_id"], message_text, reply_markup=keyboard, parse_mode="MarkdownV2")
+                order_messages[order_msg.message_id] = user_id  # Store message ID with user ID
+
+                # Forward to group if not "Hoichoi 30 Days"
+                if "group_id" in options[option]:
+                    group_msg = bot.send_message(options[option]["group_id"], message_text, reply_markup=keyboard, parse_mode="MarkdownV2")
+                    order_messages[group_msg.message_id] = user_id  # Store message ID with user ID
+
+            # Special handling for "📂 Hoichoi Own mail" to always forward the request
+            if option == "📂 Hoichoi Own mail":
+                bot.send_message(user_id, "🔹 Your request for 'Hoichoi Own Mail' has been forwarded to our team. We will notify you once it’s processed.")
+            elif option in accounts and accounts[option]:  # For other options, check if accounts are available
+                # Assign account if available and remove from list
+                account = accounts[option].pop(0)
+                account_message = f"🔹 **{option} Account**:\nUsername: {account['username']}\nPassword: {account['password']}"
+                bot.send_message(user_id, account_message)
+            else:
+                # Notify user if no accounts available (excluding "📂 Hoichoi Own mail")
+                bot.send_message(user_id, "❌ Sorry, no accounts are currently available for this service.")
         else:
             bot.answer_callback_query(call.id, "❌ You don't have enough points to make this withdrawal.")
     elif action == "cancel":
         bot.send_message(user_id, "Withdrawal request has been canceled.", reply_markup=get_main_menu_keyboard())
-        
+
+
 
 def get_main_menu_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -210,7 +201,7 @@ def joined_button(call):
 def withdraw(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.row("💰 Chorki Crack", "👥 Hoichoi Crack")
-    keyboard.row("💲 Chorki On Mail", "📂 Hoichoi On mail")
+    keyboard.row("💲 Hoichoi 30 Days", "📂 Hoichoi Own mail")
     keyboard.row("🔙 Back")
     bot.send_message(message.chat.id, "Please choose one of the withdrawal options below:", reply_markup=keyboard)
 @bot.message_handler(func=lambda message: message.text == "🔙 Back")
@@ -289,7 +280,117 @@ def balance(message):
     user_id = message.from_user.id
     points = user_data.get(user_id, {}).get("balance", 0)
     bot.send_message(message.chat.id, f"💰 Balance: {points} POINTS\n\n⚜️ Refer And Earn More !!!")
+# Admin command to delete user balance
+@bot.message_handler(commands=['delbalance'])
+def delbalance_handler(message):
+    if message.from_user.id not in ADMIN_USER_IDS:
+        bot.send_message(message.chat.id, "⚠️ You don't have permission to use this command.")
+        return
 
+    msg = bot.send_message(message.chat.id, "Please enter the user ID to delete balance:")
+    bot.register_next_step_handler(msg, process_delbalance)
+
+# Process delete balance input
+def process_delbalance(message):
+    try:
+        user_id = int(message.text.strip())
+        if user_id in user_data:
+            user_data[user_id]['balance'] = 0
+            bot.send_message(message.chat.id, f"✅ Balance for user {user_id} has been deleted.")
+            bot.send_message(user_id, "⚠️ Your balance has been reset to 0 by an admin.")
+        else:
+            bot.send_message(message.chat.id, "⚠️ User ID not found.")
+    except ValueError:
+        bot.send_message(message.chat.id, "⚠️ Invalid user ID format. Please try again.")
+# Admin command to add balance
+@bot.message_handler(commands=['balanceadd'])
+def balance_add_handler(message):
+    if message.from_user.id not in ADMIN_USER_IDS:
+        bot.send_message(message.chat.id, "⚠️ You don't have permission to use this command.")
+        return
+
+    # Ask for the amount and user ID to add balance
+    msg = bot.send_message(message.chat.id, "Please enter the amount of points and user ID in this format:\n\n`points user_id`", parse_mode="Markdown")
+    bot.register_next_step_handler(msg, process_balance_add)
+
+# Process the balance add input from the admin
+def process_balance_add(message):
+    try:
+        # Split input into points and user ID
+        points, user_id = map(str.strip, message.text.split())
+        points = int(points)
+        user_id = int(user_id)
+
+        # Ensure the user ID exists in user_data, initialize if missing
+        if user_id not in user_data:
+            user_data[user_id] = {'balance': 0, 'invited_users': 0, 'bonus_claimed': False}
+
+        # Add points to the user's balance
+        user_data[user_id]['balance'] += points
+        bot.send_message(message.chat.id, f"✅ Successfully added {points} points to user {user_id}'s balance.")
+        bot.send_message(user_id, f"🎉 You have received {points} points! Your new balance is {user_data[user_id]['balance']} points.")
+
+    except ValueError:
+        bot.send_message(message.chat.id, "⚠️ Invalid input format. Please use the format `points user_id` (e.g., `10 123456789`).")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"⚠️ An error occurred: {e}")
+
+# Admin command to broadcast a message
+@bot.message_handler(commands=['broadcast'])
+def broadcast_handler(message):
+    if message.from_user.id not in ADMIN_USER_IDS:
+        bot.send_message(message.chat.id, "⚠️ You don't have permission to use this command.")
+        return
+
+    # Ask for the message to broadcast
+    msg = bot.send_message(message.chat.id, "Please enter the message or send the file to broadcast.")
+    bot.register_next_step_handler(msg, process_broadcast)
+
+# Process the broadcast message or file
+def process_broadcast(message):
+    # Broadcast the received message to all users in total_users
+    for user_id in total_users:
+        try:
+            # Check if the message contains text, photo, document, or video to broadcast
+            if message.content_type == 'text':
+                bot.send_message(user_id, message.text)
+            elif message.content_type == 'photo':
+                bot.send_photo(user_id, message.photo[-1].file_id, caption=message.caption)
+            elif message.content_type == 'document':
+                bot.send_document(user_id, message.document.file_id, caption=message.caption)
+            elif message.content_type == 'video':
+                bot.send_video(user_id, message.video.file_id, caption=message.caption)
+        except Exception as e:
+            print(f"Could not send message to {user_id}: {e}")
+
+    # Notify the admin that the broadcast was successful
+    bot.send_message(message.chat.id, "✅ Broadcast sent to all users.")
+    # Admin command to check user balance
+@bot.message_handler(commands=['check'])
+def check_balance_handler(message):
+    if message.from_user.id not in ADMIN_USER_IDS:
+        bot.send_message(message.chat.id, "⚠️ You don't have permission to use this command.")
+        return
+
+    # Ask for the user ID to check balance
+    msg = bot.send_message(message.chat.id, "Please enter the user ID to check balance:")
+    bot.register_next_step_handler(msg, process_check_balance)
+
+# Process the check balance input from the admin
+def process_check_balance(message):
+    try:
+        user_id = int(message.text.strip())
+        
+        # Retrieve the balance for the specified user ID
+        if user_id in user_data:
+            balance = user_data[user_id].get('balance', 0)
+            bot.send_message(message.chat.id, f"💰 User {user_id} has a balance of {balance} points.")
+        else:
+            bot.send_message(message.chat.id, f"⚠️ User ID {user_id} not found.")
+    
+    except ValueError:
+        bot.send_message(message.chat.id, "⚠️ Invalid user ID format. Please enter a valid number.")
+        
 @bot.message_handler(func=lambda message: message.text == "👥 Referral")
 def referral(message):
     user_id = message.from_user.id
