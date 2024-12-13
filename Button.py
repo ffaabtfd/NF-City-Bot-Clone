@@ -6,7 +6,7 @@ import time
 import logging
 
 # Define your bot token here
-BOT_TOKEN = 'Your Bot Token'
+BOT_TOKEN = '7726534009:AAGOvr6fK04I9nDDIyFY1iHq_fKyEuMgxVs'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Store the original order message info
